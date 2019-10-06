@@ -39,7 +39,7 @@ That's why in the project we'll show how to tailor it having:
 Open the newly created `.env` file and paste this line:
 
 ```
-ENV_VAR_TEST=Hi there I'm an EVN VAR loaded from the root dotenv file :) !
+ENV_VAR_TEST=Hi there I'm an EVN VAR loaded from the root dotenv file 😁 !
 ```
 
 #### Testing time 🤞🏽👨🏼‍⚕️
