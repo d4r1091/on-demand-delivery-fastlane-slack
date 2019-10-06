@@ -54,3 +54,21 @@ bundle exec fastlane test_dotenv
 That's how the output should look like:
 
 ![](/res/testing_dotenv.gif)
+
+## Creating a subsidiary Fastfile
+
+Code separation is always a good practice. We are going to manage our Fastlane's lanes having more or less the same approach.
+In the example there are two more Fastfile to be imported.
+
+- BetaDeliveryFastfile: manages the beta delivery through services like Fabric
+- ClientDeliveryFastfile: exsclusively delegated to handle client facing / production-like releases
+
+Having the three Fastfiles in our project, by executing the public lane:
+
+```
+bundle exec fastlane test_fastfile_import
+```
+
+The result on your terminal will look like this:
+
+![](/res/testing_external_fastfile_laoding.gif)

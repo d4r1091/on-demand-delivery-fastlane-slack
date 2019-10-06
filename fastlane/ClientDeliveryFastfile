@@ -1,0 +1,33 @@
+######################### CONSTANTS #########################
+
+#------------------------ fastlane -------------------------#
+
+# something
+
+#------------------------- XCode ---------------------------#
+
+###################### END CONSTANTS ########################
+
+#----------------------- FASTLANE --------------------------#
+
+# something
+
+###################### PUBLIC LANES #########################
+
+
+
+##################### END PUBLIC LANES #######################
+
+###################### PRIVATE LANES #########################
+
+desc "Test external Fastfile import"
+private_lane :client_delivery_laod_test_lane do
+
+  lane_name = lane_context[SharedValues::LANE_NAME]
+  puts "Testing #{lane_name}"
+  puts "CLIENT DELIVERY FASTFILE HERE 👋!"
+  puts "Test succeeded ✅"
+
+end
+
+################### END PRIVATE LANES #######################

@@ -14,8 +14,53 @@
 # update_fastlane
 
 fastlane_require 'dotenv'
+import "ClientDeliveryFastfile"
+import "BetaDeliveryFastfile"
 
-default_platform(:ios)
+######################### CONSTANTS #########################
+
+#------------------------ fastlane -------------------------#
+
+# declare something
+
+#------------------------- XCode ---------------------------#
+
+# the target name
+scheme_name = ENV['SCHEME_NAME']
+
+# the Xcode project path
+xcodeproj_path = ENV['XCODE_PROJ_PATH']
+
+# the app bundle identifier i.e. com.awesomecompany.awesomeproject
+current_app_bundle_identifier = ENV["BUNDLE_IDENTIFIER"]
+
+# the service we use to deliver our archived .ipa i.e. Fabric / Testflight
+build_service = ENV["BUILD_SERVICE"]
+
+# the dev portal team identifier
+team_id = ENV["TEAM_ID"]
+
+# app build configuration defined in the .env file
+# i.e. debug, staging, uat, production
+build_configuration = ENV["BUILD_CONFIGURATION"]
+
+# build changelog if needed
+changelog = ENV["CHANGELOG"]
+
+# the temporary keychain name
+keychain_name = ENV['KEYCHAIN_NAME']
+
+# the temporary keychain password
+keychain_password = ENV['KEYCHAIN_PASSWORD']
+
+# the app export method defined in the .env file i.e. adhoc, appstore
+export_method = ENV['EXPORT_METHOD']
+
+###################### END CONSTANTS ########################
+
+#----------------------- FASTLANE -------------------------#
+
+default_platform :ios
 
 platform :ios do
 
@@ -25,10 +70,11 @@ platform :ios do
 
       # loading dotenv files
       load_dotenv
+      fastlane_version ENV['FASTLANE_MIN_VERSION']
 
   end
 
-  ########################## PUBLIC LANES #########################
+########################## PUBLIC LANES #########################
 
   desc "Test the .env convention implementation"
   lane :test_dotenv do
@@ -42,9 +88,18 @@ platform :ios do
 
   end
 
-  ####################### END PUBLIC LANES ########################
+  desc "Test the external import of the two Fastfiles"
+  lane :test_external_fastfile_import do
 
-  ######################### PRIVATE LANES #########################
+    client_delivery_laod_test_lane
+    beta_delivery_laod_test_lane
+    puts "External lane loaded from a different Fastfile succeeded ✅"
+
+  end
+
+####################### END PUBLIC LANES ########################
+
+######################### PRIVATE LANES #########################
 
   desc "Load dotev files"
   private_lane :load_dotenv do
@@ -58,6 +113,6 @@ platform :ios do
 
   end
 
-  ##################### END PRIVATE LANES #########################
+##################### END PRIVATE LANES #########################
 
 end

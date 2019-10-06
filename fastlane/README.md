@@ -21,6 +21,11 @@ or alternatively using `brew cask install fastlane`
 fastlane ios test_dotenv
 ```
 Test the .env convention implementation
+### ios test_external_fastfile_import
+```
+fastlane ios test_external_fastfile_import
+```
+Test the external import of the two Fastfiles
 
 ----
 
