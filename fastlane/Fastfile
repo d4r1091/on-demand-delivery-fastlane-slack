@@ -13,11 +13,51 @@
 # Uncomment the line if you want fastlane to automatically update itself
 # update_fastlane
 
+fastlane_require 'dotenv'
+
 default_platform(:ios)
 
 platform :ios do
-  desc "Description of what the lane does"
-  lane :custom_lane do
-    # add actions here: https://docs.fastlane.tools/actions
+
+  before_all do
+
+      # called everytime a fastlane action is being executed
+
+      # loading dotenv files
+      load_dotenv
+
   end
+
+  ########################## PUBLIC LANES #########################
+
+  desc "Test the .env convention implementation"
+  lane :test_dotenv do
+
+    lane_name = lane_context[SharedValues::LANE_NAME]
+    env_var_content = ENV['ENV_VAR_TEST']
+
+    puts "Testing #{lane_name}"
+    puts "You are testing the dotenv lane, here is the string loaded..."
+    puts "#{env_var_content}"
+
+  end
+
+  ####################### END PUBLIC LANES ########################
+
+  ######################### PRIVATE LANES #########################
+
+  desc "Load dotev files"
+  private_lane :load_dotenv do
+
+    dotenv_path = 'developer_files/env'
+    dotenv_scheme = ENV['CLIENT']
+    dotenv_configuration = ENV['ENVIRONMENT']
+
+    Dotenv.load("#{dotenv_path}/.env")
+    Dotenv.overload("#{dotenv_path}/#{dotenv_scheme}/#{dotenv_scheme}-#{dotenv_configuration}.env")
+
+  end
+
+  ##################### END PRIVATE LANES #########################
+
 end
