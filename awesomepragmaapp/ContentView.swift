@@ -9,8 +9,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    private let stackViewSpacing: CGFloat = 8.0
+    
     var body: some View {
-        Text("Hello World 👋")
+        VStack(alignment: .center, spacing: stackViewSpacing) {
+            Text("Hello #PragmaConf2019! 👋")
+            Text("Try out the Slackbot 🤖 integration 🚀")
+        }
     }
 }
 
