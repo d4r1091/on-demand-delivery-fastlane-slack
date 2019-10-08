@@ -98,4 +98,5 @@ Skip the docker integration below if you've tried the cloud hosted one
 For more info follow:
 
 [Code signing guidelines](Codesign.md)
+
 [Delivery guidelines](Delivery.md)
