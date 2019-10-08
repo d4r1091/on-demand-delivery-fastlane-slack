@@ -61,7 +61,7 @@
 				2C42C179234807CF009AED30 /* ContentView.swift */,
 				2C42C17B234807D4009AED30 /* Assets.xcassets */,
 				2C42C180234807D4009AED30 /* LaunchScreen.storyboard */,
-				2C42C183234807D4009AED30 /* Info.plist */,
+				2C42C189234B8E83009AED30 /* Supporting Files */,
 				2C42C17D234807D4009AED30 /* Preview Content */,
 			);
 			path = awesomepragmaapp;
@@ -73,6 +73,14 @@
 				2C42C17E234807D4009AED30 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		2C42C189234B8E83009AED30 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				2C42C183234807D4009AED30 /* Info.plist */,
+			);
+			path = "Supporting Files";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -103,7 +111,7 @@
 			attributes = {
 				LastSwiftUpdateCheck = 1100;
 				LastUpgradeCheck = 1100;
-				ORGANIZATIONNAME = "Tictrac ltd";
+				ORGANIZATIONNAME = "";
 				TargetAttributes = {
 					2C42C171234807CF009AED30 = {
 						CreatedOnToolsVersion = 11.0;

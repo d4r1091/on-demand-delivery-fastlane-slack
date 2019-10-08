@@ -1,0 +1,47 @@
+desc 'Build that app!'
+private_lane :archive do |options|
+
+  scheme_name = options[:scheme_name]
+  build_number = options[:ci_build_number]
+
+  # Install cocoapods
+  cocoapods(repo_update: true, use_bundle_exec: true)
+
+  # Increment build number
+  increment_build_number_in_plist(
+    xcodeproj: options[:xcodeproj_path],
+    build_configuration_name: options[:build_configuration],
+    target: scheme_name,
+    build_number: ci_build_number # can be your service build number assigned to that job
+  )
+
+  appname_prefix = ENV['APPNAME_PREFIX']
+  app_display_name = scheme_name
+
+  unless appname_prefix.to_s.empty?
+    app_display_name = appname_prefix +'-'+scheme_name
+  do
+
+  # Change the Display Name of your app if needed
+  update_info_plist(
+    plist_path: "#{options[:plist_path]}#{scheme_name}-Info.plist",
+    display_name: app_display_name
+  )
+
+  # Build your app
+  gym(scheme: scheme_name,
+      include_bitcode: false,
+      export_method: options[:export_method],
+      export_options: {
+        provisioningProfiles: {
+          options[:bundle_identifier] => options[:provisioning_profile_name]
+        }
+      },
+      configuration: options[:build_configuration],
+      codesigning_identity: ENV['CODESIGNING_IDENTITY'],
+      output_name: "#{scheme_name}_#{ci_build_number}.ipa",
+      output_directory: ENV['OUTPUTS_PATH'],
+      skip_package_ipa: ENV['SKIP_PACKAGE_IPA']
+    )
+
+end

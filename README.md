@@ -1,5 +1,8 @@
 # awesome-prgma-2019
-iOS App for #PragmaConf example of on demand builds via Slack
+
+iOS Architecture made up and released open source in occasion of the [#PragmaConf2019](http://pragmaconference.com).
+
+# This project is being constantly updated
 
 ## Getting started
 
@@ -23,6 +26,8 @@ Dotenv convention wants you to make files following its convention, which is **a
 That's why in the project we'll show how to tailor it having:
 - targets (clients)
 - build configuration (development, staging, uat, production)
+
+If you'd like to make your dotenv files encrypted, follow [secure_dotenv project](https://github.com/psecio/secure_dotenv)
 
 #### Reminder: in the example Fasfile is used the manually loaded procedure.
 
@@ -72,3 +77,25 @@ bundle exec fastlane test_fastfile_import
 The result on your terminal will look like this:
 
 ![](/res/testing_external_fastfile_laoding.gif)
+
+## OK! The basics stuff have been setup!
+
+Let's go ahead setting up:
+- Jenkins
+- Our Slackbot using [Corebot](https://github.com/outofcoffee/corebot)
+  - you can either try their cloud based solution (free plan / not recommended)
+
+Skip the docker integration below if you've tried the cloud hosted one
+
+- [Install Docker](https://docs.docker.com/docker-for-mac/install/) in our Machine
+- Create Codesigning lanes
+- Enrich the BetaDeliveryFastfile
+- [Integrate Fabric Crashlytics](https://firebase.google.com/docs/crashlytics/get-started?platform=ios&utm_source=fabric&utm_medium=inline_banner&utm_campaign=fabric_sunset&utm_content=kits_crashlytics) in your project
+- Integrate Fabric in your Fastlane solution
+  - CRASHLYTICS_APIKEY in your .env file
+  - CRASHLYTICS_BUILDSECRET in your .env file
+
+For more info follow:
+
+[Code signing guidelines](Codesign.md)
+[Delivery guidelines](Delivery.md)
