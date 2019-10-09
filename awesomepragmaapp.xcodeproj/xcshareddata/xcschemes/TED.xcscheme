@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "2C42C171234807CF009AED30"
-               BuildableName = "awesomepragmaapp.app"
-               BlueprintName = "awesomepragmaapp"
+               BlueprintIdentifier = "2C39EC84234E275C00DFCE98"
+               BuildableName = "WWF.app"
+               BlueprintName = "WWF"
                ReferencedContainer = "container:awesomepragmaapp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,11 +45,20 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2C42C171234807CF009AED30"
-            BuildableName = "awesomepragmaapp.app"
-            BlueprintName = "awesomepragmaapp"
+            BuildableName = "TED.app"
+            BlueprintName = "TED"
             ReferencedContainer = "container:awesomepragmaapp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "2C39EC84234E275C00DFCE98"
+            BuildableName = "WWF.app"
+            BlueprintName = "WWF"
+            ReferencedContainer = "container:awesomepragmaapp.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -61,9 +70,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "2C42C171234807CF009AED30"
-            BuildableName = "awesomepragmaapp.app"
-            BlueprintName = "awesomepragmaapp"
+            BlueprintIdentifier = "2C39EC84234E275C00DFCE98"
+            BuildableName = "WWF.app"
+            BlueprintName = "WWF"
             ReferencedContainer = "container:awesomepragmaapp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
