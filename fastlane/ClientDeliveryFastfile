@@ -1,0 +1,29 @@
+###################### PRIVATE LANES #########################
+
+desc "Test external Fastfile import"
+private_lane :client_delivery_laod_test_lane do
+
+  lane_name = lane_context[SharedValues::LANE_NAME]
+  puts "Testing #{lane_name}"
+  puts "CLIENT DELIVERY FASTFILE HERE 👋!"
+  puts "Test succeeded ✅"
+
+end
+
+desc 'Submits a newly packaged app to Testflight'
+private_lane upload_testflight do |options|
+
+  # Having skip_waiting_for_build_processing set to _true_
+  # won't apply any changelog
+
+  upload_to_testflight ({
+   skip_submission:true,
+   skip_waiting_for_build_processing:true,
+   distribute_external: false,
+   changelog: options[:changelog],
+   team_id: ENV['ITUNESCONNECT_TEAM_ID']
+  })
+
+end
+
+################### END PRIVATE LANES #######################

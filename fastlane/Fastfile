@@ -1,0 +1,264 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+fastlane_require 'dotenv'
+import "CodeSignFastfile"
+import "ArchiveFastfile"
+import "ClientDeliveryFastfile"
+import "BetaDeliveryFastfile"
+
+######################### CONSTANTS #########################
+
+#------------------------ fastlane -------------------------#
+
+# declare something
+
+#------------------------- XCode ---------------------------#
+
+# the target name
+scheme_name = ENV['SCHEME_NAME']
+
+# the Xcode project path
+xcodeproj_path = ENV['XCODE_PROJ_PATH']
+
+# the app bundle identifier i.e. com.awesomecompany.awesomeproject
+current_app_bundle_identifier = ENV["BUNDLE_IDENTIFIER"]
+
+# the service we use to deliver our archived .ipa i.e. Fabric / Testflight
+build_service = ENV["BUILD_SERVICE"]
+
+# the dev portal team identifier
+team_id = ENV["TEAM_ID"]
+
+# app build configuration defined in the .env file
+# i.e. debug, staging, uat, production
+build_configuration = ENV["BUILD_CONFIGURATION"]
+
+# build changelog if needed
+changelog = ENV["CHANGELOG"]
+
+# the temporary keychain name
+keychain_name = ENV['KEYCHAIN_NAME']
+
+# the temporary keychain password
+keychain_password = ENV['KEYCHAIN_PASSWORD']
+
+# the app export method defined in the .env file i.e. adhoc, appstore
+export_method = ENV['EXPORT_METHOD']
+
+# your .plist root path
+plist_path = ENV['APP_PLIST_ROOT_PATH']
+
+# provisioning profile we should sign our app with
+provisioning_profile_name = ENV['PROVISIONING_PROFILE_NAME']
+
+# provisioning profile filename retrieved from the developer_files/provioning_profiles folder
+provisioning_filename = ENV['PROVISIONING_PROFILE_FILE_NAME']
+
+###################### END CONSTANTS ########################
+
+#----------------------- FASTLANE -------------------------#
+
+default_platform :ios
+
+platform :ios do
+
+  before_all do
+
+      # called everytime a fastlane action is being executed
+
+      # loading dotenv files
+      load_dotenv
+      fastlane_version ENV['FASTLANE_MIN_VERSION']
+
+  end
+
+  after_all do |lane|
+
+    if ENV['SAVE_ARCHIVE'] == 'false'
+
+      # Make sure our directory is clean
+      # except for changes Fastlane has made
+      clean_build_artifacts
+
+    end
+
+    # This block is called, only if the executed lane was successful
+    # If a BUILD_MESSAGE has been defined, lets Slack it
+
+    slack(
+        message: ENV['BUILD_MESSAGE']
+    )
+
+  end
+
+  error do |lane, exception|
+
+    slack(
+      message: exception.message,
+      success: false
+    )
+
+  end
+
+########################## PUBLIC LANES #########################
+
+  desc "Test the .env convention implementation"
+  lane :test_dotenv do
+
+    lane_name = lane_context[SharedValues::LANE_NAME]
+    env_var_content = ENV['ENV_VAR_TEST']
+
+    puts "Testing #{lane_name}"
+    puts "You are testing the dotenv lane, here is the string loaded..."
+    puts "#{env_var_content}"
+
+  end
+
+  desc "Test the external import of the two Fastfiles"
+  lane :test_external_fastfile_import do
+
+    client_delivery_laod_test_lane
+    beta_delivery_laod_test_lane
+    puts "External lane loaded from a different Fastfile succeeded ✅"
+
+  end
+
+  desc "Deliver build given a BUILD_SERVICE defined"
+  lane :deliver_build do
+
+    if build_service == 'testflight'
+      testflight_delivery
+    elsif build_service == 'fabric'
+      beta_delivery
+    end
+
+  end
+
+  private_lane :common_pre_delivery_steps do
+
+    create_temp_keychain(
+      name: keychain_name,
+      password: keychain_password
+    )
+
+    import_certificates(
+      keychain_name: keychain_name,
+      keychain_password: keychain_password,
+    )
+
+    manual_code_sign_app(
+      scheme_name: scheme_name,
+      xcodeproj_path: xcodeproj_path,
+      team_id: team_id,
+      plist_path: plist_path,
+      bundle_identifier: current_app_bundle_identifier,
+      build_configuration: build_configuration,
+      provisioning_profile_name: provisioning_profile_name,
+      provisioning_filename: provisioning_filename
+    )
+
+    archive(
+      scheme_name: scheme_name,
+      xcodeproj_path: xcodeproj_path,
+      plist_path: plist_path,
+      bundle_identifier: current_app_bundle_identifier,
+      export_method: export_method,
+      provisioning_profile_name: provisioning_profile_name
+    )
+
+  end
+
+  desc "Beta delivery private lane"
+  private_lane :beta_delivery do
+
+    submit_to_fabric(
+      api_key: crashlytics_apikey,
+      secret: crashlytics_buildsecret,
+      build_configuration: build_configuration,
+      release_notes: changelog,
+      group: group
+    )
+
+  end
+
+  desc "Testflight delivery private lane"
+  private_lane :testflight_delivery do
+
+    upload_testflight(changelog: changelog)
+
+  end
+
+#---------------------- Devices management -----------------------#
+
+  desc 'Adds a new device to your Team efforlessly'
+  lane :add_device do
+    register_device(
+      name: ENV['DEVICE_NAME'],
+      udid: ENV['DEVICE_UDID'],
+      team_id: team_id
+    )
+  end
+
+#---------------------- Team management --------------------------#
+
+  desc 'Prints out Team Names and Team IDs'
+  lane :get_team_names do
+
+     # setup FASTLANE_USER and FASTLANE_PASSWORD as env var first
+     # launch the lane
+     # Get iTunes connect Team ID and Team name
+     # from ItunesTeamNames and DevTeamNames files in fastlane folder
+
+     require "spaceship"
+     clientTunes = Spaceship::Tunes.login(ENV['FASTLANE_USER'], ENV['FASTLANE_PASSWORD'])
+     client = Spaceship::Portal.login(ENV['FASTLANE_USER'], ENV['FASTLANE_PASSWORD'])
+
+     strClientTunes = ""
+     clientTunes.teams.each do |team|
+         UI.message "#{team['contentProvider']['name']} (#{team['contentProvider']['contentProviderId']})"
+         strClientTunes << "#{team['contentProvider']['name']} (#{team['contentProvider']['contentProviderId']})||"
+     end
+     File.write('ItunesTeamNames', strClientTunes[0..-3])
+
+     strDevPortal = ""
+     client.teams.each do |team|
+         UI.message "#{team['name']} (#{team['teamId']})"
+         strDevPortal << "#{team['name']} (#{team['teamId']})||"
+     end
+
+     File.write('DevTeamNames', strDevPortal[0..-3])
+
+   end
+
+####################### END PUBLIC LANES ########################
+
+######################### PRIVATE LANES #########################
+
+  desc "Load dotev files"
+  private_lane :load_dotenv do
+
+    dotenv_path = 'developer_files/env'
+    dotenv_scheme = ENV['CLIENT']
+    dotenv_configuration = ENV['ENVIRONMENT']
+
+    Dotenv.load("#{dotenv_path}/.env")
+    Dotenv.overload("#{dotenv_path}/#{dotenv_scheme}/#{dotenv_scheme}-#{dotenv_configuration}.env")
+
+  end
+
+##################### END PRIVATE LANES #########################
+
+end

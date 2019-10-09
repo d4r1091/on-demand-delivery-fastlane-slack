@@ -1,0 +1,26 @@
+###################### PRIVATE LANES #########################
+
+desc "Test external Fastfile import"
+private_lane :beta_delivery_laod_test_lane do
+
+  lane_name = lane_context[SharedValues::LANE_NAME]
+  puts "Testing #{lane_name}"
+  puts "BETA DELIVERY FASTFILE HERE 👋!"
+  puts "Test succeeded ✅"
+
+end
+
+desc 'Submits a newly packaged app to to Fabric'
+private_lane :submit_to_fabric do |options|
+
+  crashlytics(
+    crashlytics_path: './Pods/Crashlytics/submit', # path to your 'Crashlytics.framework'
+    api_token: options[:api_key],
+    build_secret: options[:secret],
+    groups: options[:group],
+    notes: "#{options[:build_configuration]} - #{options[:release_notes]}"
+  )
+
+end
+
+################### END PRIVATE LANES #######################
