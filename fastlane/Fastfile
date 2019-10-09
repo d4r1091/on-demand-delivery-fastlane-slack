@@ -16,7 +16,7 @@
 fastlane_require 'dotenv'
 import "CodeSignFastfile"
 import "ArchiveFastfile"
-import "partnerDeliveryFastfile"
+import "PartnerDeliveryFastfile"
 import "BetaDeliveryFastfile"
 
 ######################### CONSTANTS #########################
@@ -184,6 +184,8 @@ platform :ios do
   desc "Beta delivery private lane"
   private_lane :beta_delivery do
 
+    common_pre_delivery_steps
+
     submit_to_fabric(
       api_key: crashlytics_apikey,
       secret: crashlytics_buildsecret,
@@ -196,6 +198,8 @@ platform :ios do
 
   desc "Testflight delivery private lane"
   private_lane :testflight_delivery do
+
+    common_pre_delivery_steps
 
     upload_testflight(changelog: changelog)
 
