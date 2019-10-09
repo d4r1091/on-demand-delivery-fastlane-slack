@@ -1,20 +1,15 @@
 version: '1'
 actions:
 
-  build_standard:
+  demo:
     driver: jenkins
-    jobId: ios_build
-    template: deploy {PARTNER}
+    jobId: ios_build_demo
+    template: run a demo
     options:
      PARTNER:
-       transformers:
-         - LOWERCASE
+       value: TED
      ENVIRONMENT:
        value: staging
-       transformers:
-         - LOWERCASE
-     BRANCH_NAME:
-       value: develop
 
   build_with_configuration_and_branch:
     driver: jenkins

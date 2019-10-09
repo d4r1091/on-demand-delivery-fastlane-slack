@@ -115,6 +115,16 @@ platform :ios do
 
 ########################## PUBLIC LANES #########################
 
+  desc "Running a simple demo!"
+  lane :run_demo do
+
+    test_dotenv
+    partner = ENV['PARTNER']
+    environment = ENV['ENVIRONMENT']
+    puts "Loaded partner #{partner} in #{environment} environment!"
+
+  end
+
   desc "Test the .env convention implementation"
   lane :test_dotenv do
 
