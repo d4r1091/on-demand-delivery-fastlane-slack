@@ -16,7 +16,7 @@
 fastlane_require 'dotenv'
 import "CodeSignFastfile"
 import "ArchiveFastfile"
-import "ClientDeliveryFastfile"
+import "partnerDeliveryFastfile"
 import "BetaDeliveryFastfile"
 
 ######################### CONSTANTS #########################
@@ -130,7 +130,7 @@ platform :ios do
   desc "Test the external import of the two Fastfiles"
   lane :test_external_fastfile_import do
 
-    client_delivery_laod_test_lane
+    partner_delivery_laod_test_lane
     beta_delivery_laod_test_lane
     puts "External lane loaded from a different Fastfile succeeded ✅"
 
@@ -223,18 +223,18 @@ platform :ios do
      # from ItunesTeamNames and DevTeamNames files in fastlane folder
 
      require "spaceship"
-     clientTunes = Spaceship::Tunes.login(ENV['FASTLANE_USER'], ENV['FASTLANE_PASSWORD'])
-     client = Spaceship::Portal.login(ENV['FASTLANE_USER'], ENV['FASTLANE_PASSWORD'])
+     partnerTunes = Spaceship::Tunes.login(ENV['FASTLANE_USER'], ENV['FASTLANE_PASSWORD'])
+     partner = Spaceship::Portal.login(ENV['FASTLANE_USER'], ENV['FASTLANE_PASSWORD'])
 
-     strClientTunes = ""
-     clientTunes.teams.each do |team|
+     strpartnerTunes = ""
+     partnerTunes.teams.each do |team|
          UI.message "#{team['contentProvider']['name']} (#{team['contentProvider']['contentProviderId']})"
-         strClientTunes << "#{team['contentProvider']['name']} (#{team['contentProvider']['contentProviderId']})||"
+         strpartnerTunes << "#{team['contentProvider']['name']} (#{team['contentProvider']['contentProviderId']})||"
      end
-     File.write('ItunesTeamNames', strClientTunes[0..-3])
+     File.write('ItunesTeamNames', strpartnerTunes[0..-3])
 
      strDevPortal = ""
-     client.teams.each do |team|
+     partner.teams.each do |team|
          UI.message "#{team['name']} (#{team['teamId']})"
          strDevPortal << "#{team['name']} (#{team['teamId']})||"
      end
@@ -251,7 +251,7 @@ platform :ios do
   private_lane :load_dotenv do
 
     dotenv_path = 'developer_files/env'
-    dotenv_scheme = ENV['CLIENT']
+    dotenv_scheme = ENV['PARTNER']
     dotenv_configuration = ENV['ENVIRONMENT']
 
     Dotenv.load("#{dotenv_path}/.env")

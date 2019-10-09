@@ -52,7 +52,7 @@ disable_automatic_code_signing(
 
 The next one is quite interesting. Here is where the real magic happens.
 If we have a provisioning profile installed locally, then we'll use it as part of our app the singing process.
-Otherwise we'll search over the developer portal of that client and recreate it adding all the latest device UDIDs (given the right roles).
+Otherwise we'll search over the developer portal of that partner and recreate it adding all the latest device UDIDs (given the right roles).
 The condition whether or not recreate the provisioning profile is checked by the environment variable `RECREATE_PROVISIONING_PROFILE` (default to `true`) at .env level.
 
 ```

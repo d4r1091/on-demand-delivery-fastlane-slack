@@ -24,7 +24,7 @@ xcode-select --install
 
 Dotenv convention wants you to make files following its convention, which is **absolutely** the way you should go for if you have one project to mantain. In the case studied and explained in the talk, I've mentioned about different environment, projects, variables, so I had to adapt the **dotenv** loading to be controlled manually.
 That's why in the project we'll show how to tailor it having:
-- targets (clients)
+- targets (partners)
 - build configuration (development, staging, uat, production)
 
 If you'd like to make your dotenv files encrypted, follow [secure_dotenv project](https://github.com/psecio/secure_dotenv)
@@ -37,7 +37,7 @@ If you'd like to make your dotenv files encrypted, follow [secure_dotenv project
 
 - Create your dotenv files following the **manually laded** files
   - .env (root file)
-  - [client]-[environment].env (i.e. - ClientA-Staging.env) and so on…
+  - [partner]-[environment].env (i.e. - partnerA-Staging.env) and so on…
 
 #### Populate .env file
 
@@ -66,7 +66,7 @@ Code separation is always a good practice. We are going to manage our Fastlane's
 In the example there are two more Fastfile to be imported.
 
 - BetaDeliveryFastfile: manages the beta delivery through services like Fabric
-- ClientDeliveryFastfile: exsclusively delegated to handle client facing / production-like releases
+- partnerDeliveryFastfile: exsclusively delegated to handle partner facing / production-like releases
 
 Having the three Fastfiles in our project, by executing the public lane:
 

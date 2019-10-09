@@ -1,6 +1,6 @@
 ## Delivery with Fastlane
 
-As per the intention of this guideline, we'd like to separate internal and client facing builds.
+As per the intention of this guideline, we'd like to separate internal and partner facing builds.
 For that, we are going to use Fabric internal beta testing and Testflight externally.
 
 But first, lets archive the build.
