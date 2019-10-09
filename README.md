@@ -1,4 +1,4 @@
-# awesome-prgma-2019 💪🏻🚀#️⃣📱
+# awesome-pragmaconf-2019 💪🏻🚀#️⃣📱
 
 iOS Architecture made up and released open source in occasion of the [#PragmaConf2019](http://pragmaconference.com).
 
