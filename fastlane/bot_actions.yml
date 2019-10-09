@@ -1,0 +1,50 @@
+version: '1'
+actions:
+
+  build_standard:
+    driver: jenkins
+    jobId: ios_build
+    template: deploy {PARTNER}
+    options:
+     PARTNER:
+       transformers:
+         - LOWERCASE
+     ENVIRONMENT:
+       value: staging
+       transformers:
+         - LOWERCASE
+     BRANCH_NAME:
+       value: develop
+
+  build_with_configuration_and_branch:
+    driver: jenkins
+    jobId: ios_build
+    template: deploy {PARTNER} in {ENVIRONMENT} from {BRANCH_NAME}
+    options:
+     PARTNER:
+       transformers:
+         - LOWERCASE
+     ENVIRONMENT:
+       transformers:
+         - LOWERCASE
+     BRANCH_NAME:
+       value: develop
+
+  build_standard_with_branch_and_changelog:
+    driver: jenkins
+    jobId: ios_build
+    template: deploy {PARTNER} in {ENVIRONMENT} from {BRANCH_NAME} with changelog - {CHANGELOG}
+    options:
+     PARTNER:
+       transformers:
+         - LOWERCASE
+     ENVIRONMENT:
+       transformers:
+         - LOWERCASE
+     BRANCH_NAME:
+       value: develop
+
+  add_device:
+    driver: jenkins
+    jobId: iOS_Add_Device
+    template: add {DEVICE_NAME} with {DEVICE_UDID}
