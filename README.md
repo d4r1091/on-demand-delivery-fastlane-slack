@@ -81,7 +81,17 @@ The result on your terminal will look like this:
 ## OK! The basics stuff have been setup!
 
 Let's go ahead setting up:
+
 - Jenkins
+  - after installing it, please go ahead installing the following plugins:
+    - Strict Crumb Issuer Plugin
+    - AnsiColor
+
+After doing so, restart Jenkins and make sure this configuration is setup under:
+Manage Jenkins -> Configure Global Security -> CSRF Protection
+
+![](/res/jenkins_crumb_check.png)
+
 - Our Slackbot using [Corebot](https://github.com/outofcoffee/corebot)
   - you can either try their cloud based solution (free plan / not recommended)
 
