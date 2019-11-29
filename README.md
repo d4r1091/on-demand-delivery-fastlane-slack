@@ -35,7 +35,7 @@ If you'd like to make your dotenv files encrypted, follow [secure_dotenv project
   - .env (root file)
   - .env.development (development file) .env.staging and so on…
 
-- Create your dotenv files following the **manually laded** files
+- Create your dotenv files following the **manually loaded** files
   - .env (root file)
   - [partner]-[environment].env (i.e. - partnerA-Staging.env) and so on…
 
