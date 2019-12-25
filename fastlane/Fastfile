@@ -23,7 +23,20 @@ import "BetaDeliveryFastfile"
 
 #------------------------ fastlane -------------------------#
 
-# declare something
+desc "Load dotev files"
+def load_dotenv
+
+  dotenv_path = 'developer_files/env'
+  dotenv_scheme = ENV['PARTNER']
+  dotenv_configuration = ENV['ENVIRONMENT']
+
+  Dotenv.load("#{dotenv_path}/.env")
+  Dotenv.overload("#{dotenv_path}/#{dotenv_scheme}/#{dotenv_scheme}-#{dotenv_configuration}.env")
+
+end
+
+# loading dotenv files
+load_dotenv
 
 #------------------------- XCode ---------------------------#
 
@@ -78,10 +91,13 @@ platform :ios do
   before_all do
 
       # called everytime a fastlane action is being executed
-
-      # loading dotenv files
-      load_dotenv
       fastlane_version ENV['FASTLANE_MIN_VERSION']
+
+      ENV["FASTLANE_XCODE_LIST_TIMEOUT"] = "1000"
+      ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "10"
+      ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "1000"
+
+      sh "printenv"
 
   end
 
@@ -146,6 +162,24 @@ platform :ios do
 
   end
 
+  desc 'Upload build to test on Browserstack environment'
+  lane :upload_browserstack do
+
+      build = ENV["CIRCLE_BUILD_NUM"]
+
+      scan(
+        skip_build:true
+      )
+
+      common_pre_delivery_steps
+
+      upload_to_browserstack_app_automate(
+        browserstack_username: ENV["BROWSERSTACK_USERNAME"],
+        browserstack_access_key: ENV["BROWSERSTACK_ACCESS_KEY"],
+        file_path: "./output/packages/#{scheme_name}_#{build}.ipa"
+      )
+  end
+
   desc "Deliver build given a BUILD_SERVICE defined"
   lane :deliver_build do
 
@@ -157,61 +191,12 @@ platform :ios do
 
   end
 
-  private_lane :common_pre_delivery_steps do
+  desc 'Trigger the lane that archives the build and distribute to external testing'
+  lane :deliver_build_externally do
 
-    create_temp_keychain(
-      name: keychain_name,
-      password: keychain_password
-    )
-
-    import_certificates(
-      keychain_name: keychain_name,
-      keychain_password: keychain_password,
-    )
-
-    manual_code_sign_app(
-      scheme_name: scheme_name,
-      xcodeproj_path: xcodeproj_path,
-      team_id: team_id,
-      plist_path: plist_path,
-      bundle_identifier: current_app_bundle_identifier,
-      build_configuration: build_configuration,
-      provisioning_profile_name: provisioning_profile_name,
-      provisioning_filename: provisioning_filename
-    )
-
-    archive(
-      scheme_name: scheme_name,
-      xcodeproj_path: xcodeproj_path,
-      plist_path: plist_path,
-      bundle_identifier: current_app_bundle_identifier,
-      export_method: export_method,
-      provisioning_profile_name: provisioning_profile_name
-    )
-
-  end
-
-  desc "Beta delivery private lane"
-  private_lane :beta_delivery do
-
-    common_pre_delivery_steps
-
-    submit_to_fabric(
-      api_key: crashlytics_apikey,
-      secret: crashlytics_buildsecret,
-      build_configuration: build_configuration,
-      release_notes: changelog,
-      group: group
-    )
-
-  end
-
-  desc "Testflight delivery private lane"
-  private_lane :testflight_delivery do
-
-    common_pre_delivery_steps
-
-    upload_testflight(changelog: changelog)
+      common_pre_delivery_steps
+      copy_build_for_external_source
+      common_post_delivery_build_steps
 
   end
 
@@ -261,16 +246,112 @@ platform :ios do
 
 ######################### PRIVATE LANES #########################
 
-  desc "Load dotev files"
-  private_lane :load_dotenv do
+  desc 'Sometimes clearing Derived Data is needed'
+  private_lane :deep_clean do
+    puts 'A deep clean is needed 🛀 🧹'
+    clear_derived_data
+    clean_cocoapods_cache
+    xcclean(scheme: scheme_name)
+  end
 
-    dotenv_path = 'developer_files/env'
-    dotenv_scheme = ENV['PARTNER']
-    dotenv_configuration = ENV['ENVIRONMENT']
+  desc "This lane takes care of signing and archiving the app"
+  private_lane :common_pre_delivery_steps do
 
-    Dotenv.load("#{dotenv_path}/.env")
-    Dotenv.overload("#{dotenv_path}/#{dotenv_scheme}/#{dotenv_scheme}-#{dotenv_configuration}.env")
+    deep_clean
 
+    # Install cocoapods
+    cocoapods(repo_update: true, use_bundle_exec: true)
+
+    create_temp_keychain(
+      name: keychain_name,
+      password: keychain_password
+    )
+
+    import_certificates(
+      keychain_name: keychain_name,
+      keychain_password: keychain_password,
+    )
+
+    manual_code_sign_app(
+      scheme_name: scheme_name,
+      xcodeproj_path: xcodeproj_path,
+      team_id: team_id,
+      plist_path: plist_path,
+      bundle_identifier: current_app_bundle_identifier,
+      build_configuration: build_configuration,
+      provisioning_profile_name: provisioning_profile_name,
+      provisioning_filename: provisioning_filename,
+      export_method: export_method
+    )
+
+    if ENV['ENGAGEMENT_SERVICE_EXTENSION_ENABLED'] == 'true'
+
+      manual_code_sign_notification_extension(
+        scheme_name: scheme_name,
+        xcodeproj_path: xcodeproj_path,
+        team_id: team_id,
+        plist_path: plist_path,
+        bundle_identifier: current_app_bundle_identifier,
+        build_configuration: build_configuration,
+        export_method: export_method
+      )
+
+    end
+
+    archive(
+      scheme_name: scheme_name,
+      build_configuration: build_configuration,
+      xcodeproj_path: xcodeproj_path,
+      plist_path: plist_path,
+      bundle_identifier: current_app_bundle_identifier,
+      export_method: export_method,
+      provisioning_profile_name: provisioning_profile_name
+    )
+
+  end
+
+  desc "Beta delivery private lane"
+  private_lane :beta_delivery do
+
+    common_pre_delivery_steps
+
+    # checks the ENV VAR SKIP_PACKAGE_IPA is evaluated
+    # if true, we won't have an IPA hence nothing to upload
+
+    unless ENV['SKIP_PACKAGE_IPA'] == 'true'
+      submit_to_fabric(
+        scheme_name: scheme_name,
+        build_configuration: build_configuration,
+        xcodeproj_path: xcodeproj_path,
+        release_notes: changelog
+      )
+    end
+
+  end
+
+  desc "Testflight delivery private lane"
+  private_lane :testflight_delivery do
+
+    common_pre_delivery_steps
+
+    # checks the ENV VAR SKIP_PACKAGE_IPA is evaluated
+    # if true, we won't have an IPA hence nothing to upload
+
+    unless ENV['SKIP_PACKAGE_IPA'] == 'true'
+      upload_testflight(changelog: changelog)
+    end
+
+  end
+
+  desc 'Copy archived .ipa build into the shared folder'
+  private_lane :copy_build_for_external_source do |options|
+    destination_path = shared_external_folder_path.gsub(' ', '\ ')
+    ipa_output_path = ENV['IPA_OUTPUT_PATH'].gsub(' ', '\ ')
+    # create directory if not exists
+    sh "mkdir -p #{destination_path}"
+    # copy .ipa and overwrite any existing one if needed
+    sh "yes | cp -f #{ipa_output_path} #{destination_path}."
+    puts 'Package .ipa app successfully shared 🏃🏻‍♂️💀'
   end
 
 ##################### END PRIVATE LANES #########################

@@ -11,7 +11,7 @@ private_lane :partner_delivery_laod_test_lane do
 end
 
 desc 'Submits a newly packaged app to Testflight'
-private_lane upload_testflight do |options|
+private_lane :upload_testflight do |options|
 
   # Having skip_waiting_for_build_processing set to _true_
   # won't apply any changelog
