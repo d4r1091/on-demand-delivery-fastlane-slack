@@ -1,6 +1,6 @@
 
 desc 'Performs the signing processes'
-private_lane :manual_code_sign_app do
+private_lane :manual_code_sign_app do |options|
 
   puts "Codesigning in #{options[:scheme_name]} ✍️"
 
@@ -8,11 +8,25 @@ private_lane :manual_code_sign_app do
   bundle_identifier = options[:bundle_identifier]
   xcodeproj_path = options[:xcodeproj_path]
   provisioning_filename = options[:provisioning_filename]
+  build_configuration = options[:build_configuration]
+  export_method = options[:export_method]
+  provisioning_placeholder_name = "#{scheme_name}_#{build_configuration}"
+
+  if provisioning_filename.to_s.empty?
+    provisioning_filename = provisioning_placeholder_name
+  end
 
   update_project_team(
     path: xcodeproj_path,
     teamid: options[:team_id],
     targets: [scheme_name]
+  )
+
+  increment_build_number_in_plist(
+    xcodeproj: options[:xcodeproj_path],
+    build_configuration_name: options[:build_configuration],
+    target: scheme_name,
+    build_number: ci_build_number # can be your service build number assigned to that job
   )
 
   update_app_identifier(
@@ -39,31 +53,145 @@ private_lane :manual_code_sign_app do
 
     ENV['SIGH_PROFILE_PATH'] = ENV['TO_INSTALL_PROVISIONING_PROFILES_PATH']+"/#{provisioning_filename}#{provisioning_filename_extension}"
 
-    # sets the project provisoning profile UUID to the mobile provisioning profile obtained from sigh
-
-    update_project_provisioning(
-        xcodeproj: xcodeproj_path,
-        target_filter: ".*#{scheme_name}.*",
-        build_configuration: options[:build_configuration],
-        profile: ENV['SIGH_PROFILE_PATH']
-    )
-
-  elsif
+  else
 
     puts "No provisioning profiles found at path #{provisioning_profile_path}. Going to search over your developer portal."
 
-    sigh(
-      adhoc: export_method=='ad-hoc',
-      readonly: ENV['RECREATE_PROVISIONING_PROFILE'] == 'false',
+    if ENV['RECREATE_PROVISIONING_PROFILE'] == 'true'
+
+      get_provisioning_profile(
+        adhoc: export_method=='ad-hoc',
+        force: true,
+        cert_id: ENV['CERTIFICATE_ID'],
+        skip_certificate_verification: true,
+        provisioning_name: options[:provisioning_profile_name],
+        filename: "#{provisioning_filename}#{provisioning_filename_extension}",
+        output_path: ENV['PROVISIONING_PROFILES_PATH'],
+        app_identifier: bundle_identifier
+      )
+
+    else
+
+      get_provisioning_profile(
+        adhoc: export_method=='ad-hoc',
+        readonly: true,
+        cert_id: ENV['CERTIFICATE_ID'],
+        skip_certificate_verification: true,
+        provisioning_name: options[:provisioning_profile_name],
+        filename: "#{provisioning_filename}#{provisioning_filename_extension}",
+        output_path: ENV['PROVISIONING_PROFILES_PATH'],
+        app_identifier: bundle_identifier
+      )
+
+    end
+
+  end
+
+  # set the project provisoning profile UUID to the mobile provisioning profile obtained from get_provisioning_profile
+  update_project_provisioning(
+      xcodeproj: xcodeproj_path,
+      target_filter: ".*#{scheme_name}.*",
+      build_configuration: build_configuration,
+      profile: ENV['SIGH_PROFILE_PATH']
+  )
+
+end
+
+desc 'Performs the signing processes on notification extension'
+private_lane :manual_code_sign_notification_extension do |options|
+
+  puts "Creating the AppID for the extension if needed 🤸🏼‍♀️"
+
+  engagement_service_ext_name = ENV['ENGAGEMENT_SERVICE_EXTENSION_NAME']
+  engagement_service_prov_profile_name = ENV['ENGAGEMENT_SERVICE_EXTENSION_PROVISIONING_PROFILE_NAME']
+  engagement_service_ext_bundle_identifier = "#{options[:bundle_identifier]}.#{engagement_service_ext_name}"
+
+  produce(
+    username: ENV['APPLE_ID'],
+    app_identifier: engagement_service_ext_bundle_identifier,
+    app_name: engagement_service_ext_name,
+    skip_itc: true
+  )
+
+  puts "Codesigning #{engagement_service_ext_name} ✍️"
+
+  scheme_name = options[:scheme_name]
+  bundle_identifier = options[:bundle_identifier]
+  xcodeproj_path = options[:xcodeproj_path]
+  provisioning_filename = options[:provisioning_filename]
+  build_configuration = options[:build_configuration]
+  export_method = options[:export_method]
+  provisioning_placeholder_name = "#{engagement_service_prov_profile_name}_#{scheme_name}_#{build_configuration}"
+
+  if provisioning_filename.to_s.empty?
+    provisioning_filename = provisioning_placeholder_name
+  end
+
+  update_project_team(
+    path: xcodeproj_path,
+    teamid: options[:team_id],
+    targets: [engagement_service_ext_name]
+  )
+
+  increment_build_number_in_plist(
+    xcodeproj: xcodeproj_path,
+    build_configuration_name: build_configuration,
+    target: engagement_service_ext_name,
+    build_number: ci_build_number
+  )
+
+  update_app_identifier(
+    xcodeproj: xcodeproj_path,
+    plist_path: ENV['ENGAGEMENT_SERVICE_PLIST_FILE_PATH'],
+    app_identifier: engagement_service_ext_bundle_identifier
+  )
+
+  disable_automatic_code_signing(
+    path: xcodeproj_path,
+    targets: [engagement_service_ext_name],
+    bundle_identifier: engagement_service_ext_bundle_identifier
+  )
+
+  provisioning_filename_extension = ".mobileprovision"
+  provisioning_profile_path = ENV['PROVISIONING_PROFILES_PATH']+"/#{provisioning_filename}#{provisioning_filename_extension}"
+
+  puts "No provisioning profiles found at path #{provisioning_profile_path}. Going to search over your developer portal."
+
+  if ENV['RECREATE_PROVISIONING_PROFILE'] == 'true'
+
+    get_provisioning_profile(
+      adhoc: export_method == 'ad-hoc',
+      force: true,
       cert_id: ENV['CERTIFICATE_ID'],
       skip_certificate_verification: true,
-      provisioning_name: options[:provisioning_profile_name],
+      provisioning_name: "#{engagement_service_prov_profile_name}_#{scheme_name}_#{build_configuration}",
       filename: "#{provisioning_filename}#{provisioning_filename_extension}",
       output_path: ENV['PROVISIONING_PROFILES_PATH'],
-      app_identifier: bundle_identifier
+      app_identifier: engagement_service_ext_bundle_identifier
+    )
+
+  else
+
+    get_provisioning_profile(
+      adhoc: export_method == 'ad-hoc',
+      readonly: true,
+      cert_id: ENV['CERTIFICATE_ID'],
+      skip_certificate_verification: true,
+      provisioning_name: "#{engagement_service_prov_profile_name}_#{scheme_name}_#{build_configuration}",
+      filename: "#{provisioning_filename}#{provisioning_filename_extension}",
+      output_path: ENV['PROVISIONING_PROFILES_PATH'],
+      app_identifier: engagement_service_ext_bundle_identifier
     )
 
   end
+
+  # set the project provisoning profile UUID to the mobile provisioning profile obtained from get_provisioning_profile
+  update_project_provisioning(
+      xcodeproj: xcodeproj_path,
+      target_filter: ".*#{engagement_service_ext_name}.*",
+      build_configuration: build_configuration,
+      profile: ENV['SIGH_PROFILE_PATH']
+  )
 
 end
 
