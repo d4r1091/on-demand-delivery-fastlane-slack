@@ -193,11 +193,8 @@ platform :ios do
 
   desc 'Trigger the lane that archives the build and distribute to external testing'
   lane :deliver_build_externally do
-
       common_pre_delivery_steps
       copy_build_for_external_source
-      common_post_delivery_build_steps
-
   end
 
 #---------------------- Devices management -----------------------#
@@ -345,7 +342,7 @@ platform :ios do
 
   desc 'Copy archived .ipa build into the shared folder'
   private_lane :copy_build_for_external_source do |options|
-    destination_path = shared_external_folder_path.gsub(' ', '\ ')
+    destination_path = ENV['SHARED_EXTERNAL_FOLDER_PATH'].gsub(' ', '\ ')
     ipa_output_path = ENV['IPA_OUTPUT_PATH'].gsub(' ', '\ ')
     # create directory if not exists
     sh "mkdir -p #{destination_path}"
