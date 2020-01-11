@@ -63,10 +63,13 @@ That's how the output should look like:
 ## Creating a subsidiary Fastfile
 
 Code separation is always a good practice. We are going to manage our Fastlane's lanes having more or less the same approach.
-In the example there are two more Fastfile to be imported.
+In the example there are few more Fastfile to be imported.
 
 - BetaDeliveryFastfile: manages the beta delivery through services like Fabric
-- partnerDeliveryFastfile: exsclusively delegated to handle partner facing / production-like releases
+- PartnerDeliveryFastfile: exsclusively delegated to handle partner facing / production-like releases
+- ArchiveFastfile: contains the lane that manages the Archiving process (creates .ipa)
+- CodeSignFastfile: manages the process of manually codesign the app processing certificates and provisioning profiles
+- AuxiliaryFastfile: contains lane helpers which don't necessarily belong to any of the above
 
 Having the three Fastfiles in our project, by executing the public lane:
 
@@ -74,11 +77,12 @@ Having the three Fastfiles in our project, by executing the public lane:
 bundle exec fastlane test_external_fastfile_import
 ```
 
+In this test we will load the Partner and Beta Delivery Fastfile
 The result on your terminal will look like this:
 
 ![](/res/testing_external_fastfile_laoding.gif)
 
-## OK! The basics stuff have been setup!
+## OK! The basic stuff have been setup! 👌
 
 Let's go ahead setting up:
 
