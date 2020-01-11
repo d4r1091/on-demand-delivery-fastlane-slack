@@ -71,7 +71,7 @@ In the example there are two more Fastfile to be imported.
 Having the three Fastfiles in our project, by executing the public lane:
 
 ```
-bundle exec fastlane test_fastfile_import
+bundle exec fastlane test_external_fastfile_import
 ```
 
 The result on your terminal will look like this:
