@@ -1,0 +1,81 @@
+desc 'Retrieve the Apple Authentication Session'
+private_lane :retrieve_fastlane_session do
+
+    # yell and quit if FASTLANE_USER, FASTLANE_PASSWORD are not present in env.
+    unless ENV.key?('FASTLANE_USER') && ENV.key?('FASTLANE_PASSWORD')
+      puts "Please set FASTLANE_USER, FASTLANE_PASSWORD env vars."
+      exit 1
+    end
+
+    # runs shell
+    spaceauth_output = `bundle exec fastlane spaceauth`
+    # regex the output for the value we need
+    fastlane_session_regex = %r{Pass the following via the FASTLANE_SESSION environment variable:\n(?<session>.+)\n\n\nExample:\n.+}
+    new_session = nil
+    if match = spaceauth_output.match(fastlane_session_regex)
+      # Strip out the fancy formatting
+      new_session = match[:session].gsub("\e[4m\e[36m", "").gsub("\e[0m\e[0m", "")
+    end
+
+    # Yell and quit if unable to parse out session from spaceauth output
+    if new_session.nil?
+      puts "Unable to obtain new session via fastlane spaceauth"
+      exit 1
+    else
+      ENV["FASTLANE_SESSION"] = new_session
+      puts "Fastlane Session has been setup 💪🏻"
+    end
+  end
+
+#---------------------- Team management --------------------------#
+
+desc 'Prints out Team Names and Team IDs'
+lane :get_team_names do
+
+   # setup FASTLANE_USER and FASTLANE_PASSWORD as env var first
+   # launch the lane
+   # Get iTunes connect Team ID and Team name
+   # from ItunesTeamNames and DevTeamNames files in fastlane folder
+
+   require "spaceship"
+   partnerTunes = Spaceship::Tunes.login(ENV['FASTLANE_USER'], ENV['FASTLANE_PASSWORD'])
+   partner = Spaceship::Portal.login(ENV['FASTLANE_USER'], ENV['FASTLANE_PASSWORD'])
+
+   strpartnerTunes = ""
+   partnerTunes.teams.each do |team|
+       UI.message "#{team['contentProvider']['name']} (#{team['contentProvider']['contentProviderId']})"
+       strpartnerTunes << "#{team['contentProvider']['name']} (#{team['contentProvider']['contentProviderId']})||"
+   end
+   File.write('ItunesTeamNames', strpartnerTunes[0..-3])
+
+   strDevPortal = ""
+   partner.teams.each do |team|
+       UI.message "#{team['name']} (#{team['teamId']})"
+       strDevPortal << "#{team['name']} (#{team['teamId']})||"
+   end
+
+   File.write('DevTeamNames', strDevPortal[0..-3])
+
+end
+
+#---------------------- Build management --------------------------#
+
+desc 'Sometimes clearing Derived Data is needed'
+private_lane :deep_clean do |options|
+  puts 'A deep clean is needed 🛀 🧹'
+  clear_derived_data
+  clean_cocoapods_cache
+  xcclean(scheme: options[:scheme_name])
+end
+
+
+desc 'Copy archived .ipa build into the shared folder'
+private_lane :copy_build_for_external_source do |options|
+  destination_path = options[:folder_path].gsub(' ', '\ ')
+  ipa_output_path = ENV['IPA_OUTPUT_PATH'].gsub(' ', '\ ')
+  # create directory if not exists
+  sh "mkdir -p #{destination_path}"
+  # copy .ipa and overwrite any existing one if needed
+  sh "yes | cp -f #{ipa_output_path} #{destination_path}."
+  puts 'Package .ipa app successfully shared 🏃🏻‍♂️💀'
+end

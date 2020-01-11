@@ -11,13 +11,14 @@
 #
 
 # Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
+update_fastlane
 
 fastlane_require 'dotenv'
 import "CodeSignFastfile"
 import "ArchiveFastfile"
 import "PartnerDeliveryFastfile"
 import "BetaDeliveryFastfile"
+import "AuxiliaryFastfile"
 
 ######################### CONSTANTS #########################
 
@@ -91,14 +92,12 @@ platform :ios do
   before_all do
 
       # called everytime a fastlane action is being executed
+
       fastlane_version ENV['FASTLANE_MIN_VERSION']
 
       ENV["FASTLANE_XCODE_LIST_TIMEOUT"] = "1000"
       ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "10"
       ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "1000"
-
-      sh "printenv"
-
   end
 
   after_all do |lane|
@@ -162,24 +161,6 @@ platform :ios do
 
   end
 
-  desc 'Upload build to test on Browserstack environment'
-  lane :upload_browserstack do
-
-      build = ENV["CIRCLE_BUILD_NUM"]
-
-      scan(
-        skip_build:true
-      )
-
-      common_pre_delivery_steps
-
-      upload_to_browserstack_app_automate(
-        browserstack_username: ENV["BROWSERSTACK_USERNAME"],
-        browserstack_access_key: ENV["BROWSERSTACK_ACCESS_KEY"],
-        file_path: "./output/packages/#{scheme_name}_#{build}.ipa"
-      )
-  end
-
   desc "Deliver build given a BUILD_SERVICE defined"
   lane :deliver_build do
 
@@ -193,8 +174,11 @@ platform :ios do
 
   desc 'Trigger the lane that archives the build and distribute to external testing'
   lane :deliver_build_externally do
+
       common_pre_delivery_steps
-      copy_build_for_external_source
+      copy_build_for_external_source(folder_path: shared_external_folder_path)
+      common_post_delivery_build_steps
+
   end
 
 #---------------------- Devices management -----------------------#
@@ -208,54 +192,14 @@ platform :ios do
     )
   end
 
-#---------------------- Team management --------------------------#
-
-  desc 'Prints out Team Names and Team IDs'
-  lane :get_team_names do
-
-     # setup FASTLANE_USER and FASTLANE_PASSWORD as env var first
-     # launch the lane
-     # Get iTunes connect Team ID and Team name
-     # from ItunesTeamNames and DevTeamNames files in fastlane folder
-
-     require "spaceship"
-     partnerTunes = Spaceship::Tunes.login(ENV['FASTLANE_USER'], ENV['FASTLANE_PASSWORD'])
-     partner = Spaceship::Portal.login(ENV['FASTLANE_USER'], ENV['FASTLANE_PASSWORD'])
-
-     strpartnerTunes = ""
-     partnerTunes.teams.each do |team|
-         UI.message "#{team['contentProvider']['name']} (#{team['contentProvider']['contentProviderId']})"
-         strpartnerTunes << "#{team['contentProvider']['name']} (#{team['contentProvider']['contentProviderId']})||"
-     end
-     File.write('ItunesTeamNames', strpartnerTunes[0..-3])
-
-     strDevPortal = ""
-     partner.teams.each do |team|
-         UI.message "#{team['name']} (#{team['teamId']})"
-         strDevPortal << "#{team['name']} (#{team['teamId']})||"
-     end
-
-     File.write('DevTeamNames', strDevPortal[0..-3])
-
-   end
-
 ####################### END PUBLIC LANES ########################
 
 ######################### PRIVATE LANES #########################
 
-  desc 'Sometimes clearing Derived Data is needed'
-  private_lane :deep_clean do
-    puts 'A deep clean is needed 🛀 🧹'
-    clear_derived_data
-    clean_cocoapods_cache
-    xcclean(scheme: scheme_name)
-  end
-
   desc "This lane takes care of signing and archiving the app"
   private_lane :common_pre_delivery_steps do
 
-    deep_clean
-
+    deep_clean(scheme_name: scheme_name)
     # Install cocoapods
     cocoapods(repo_update: true, use_bundle_exec: true)
 
@@ -268,6 +212,8 @@ platform :ios do
       keychain_name: keychain_name,
       keychain_password: keychain_password,
     )
+
+    retrieve_fastlane_session
 
     manual_code_sign_app(
       scheme_name: scheme_name,
@@ -338,17 +284,6 @@ platform :ios do
       upload_testflight(changelog: changelog)
     end
 
-  end
-
-  desc 'Copy archived .ipa build into the shared folder'
-  private_lane :copy_build_for_external_source do |options|
-    destination_path = ENV['SHARED_EXTERNAL_FOLDER_PATH'].gsub(' ', '\ ')
-    ipa_output_path = ENV['IPA_OUTPUT_PATH'].gsub(' ', '\ ')
-    # create directory if not exists
-    sh "mkdir -p #{destination_path}"
-    # copy .ipa and overwrite any existing one if needed
-    sh "yes | cp -f #{ipa_output_path} #{destination_path}."
-    puts 'Package .ipa app successfully shared 🏃🏻‍♂️💀'
   end
 
 ##################### END PRIVATE LANES #########################
