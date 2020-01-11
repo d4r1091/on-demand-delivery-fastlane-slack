@@ -56,8 +56,8 @@ Otherwise we'll search over the developer portal of that partner and recreate it
 The condition whether or not recreate the provisioning profile is checked by the environment variable `RECREATE_PROVISIONING_PROFILE` (default to `true`) at .env level.
 
 ```
-provisioning_profile_path = ENV['PROVISIONING_PROFILES_PATH']+"/#{provisioning_filename}#{provisioning_filename_extension}"
 provisioning_filename_extension = ".mobileprovision"
+provisioning_profile_path = ENV['PROVISIONING_PROFILES_PATH']+"/#{provisioning_filename}#{provisioning_filename_extension}"
 
 if File.exist? provisioning_profile_path
 
@@ -68,31 +68,37 @@ if File.exist? provisioning_profile_path
 
   ENV['SIGH_PROFILE_PATH'] = ENV['TO_INSTALL_PROVISIONING_PROFILES_PATH']+"/#{provisioning_filename}#{provisioning_filename_extension}"
 
-  # sets the project provisoning profile UUID to the mobile provisioning profile obtained from sigh
-
-  update_project_provisioning(
-      xcodeproj: xcodeproj_path,
-      target_filter: ".*#{scheme_name}.*",
-      build_configuration: build_configuration,
-      profile: ENV['SIGH_PROFILE_PATH']
-  )
-
-elsif
+else
 
   puts "No provisioning profiles found at path #{provisioning_profile_path}. Going to search over your developer portal."
 
-  sigh(
-    adhoc: export_method=='ad-hoc',
-    readonly: ENV['RECREATE_PROVISIONING_PROFILE'] == 'false',
-    cert_id: ENV['CERTIFICATE_ID'],
-    skip_certificate_verification: true,
-    provisioning_name: provisioning_profile_name,
-    filename: "#{provisioning_filename}#{provisioning_filename_extension}",
-    output_path: ENV['PROVISIONING_PROFILES_PATH'],
-    app_identifier: current_app_bundle_identifier
-  )
+  if ENV['RECREATE_PROVISIONING_PROFILE'] == 'true'
 
-end
+    get_provisioning_profile(
+      adhoc: export_method=='ad-hoc',
+      force: true,
+      cert_id: ENV['CERTIFICATE_ID'],
+      skip_certificate_verification: true,
+      provisioning_name: options[:provisioning_profile_name],
+      filename: "#{provisioning_filename}#{provisioning_filename_extension}",
+      output_path: ENV['PROVISIONING_PROFILES_PATH'],
+      app_identifier: bundle_identifier
+    )
+
+  else
+
+    get_provisioning_profile(
+      adhoc: export_method=='ad-hoc',
+      readonly: true,
+      cert_id: ENV['CERTIFICATE_ID'],
+      skip_certificate_verification: true,
+      provisioning_name: options[:provisioning_profile_name],
+      filename: "#{provisioning_filename}#{provisioning_filename_extension}",
+      output_path: ENV['PROVISIONING_PROFILES_PATH'],
+      app_identifier: bundle_identifier
+    )
+
+  end
 
 ```
 
@@ -103,18 +109,18 @@ Before that, we'll need to create a temporary keychain and unlock it appropriate
 
 ```
 desc 'Creates and unlock a temporary keychain'
-private_lane :create_temp_keychain do
+private_lane :create_temp_keychain do |options|
 
   create_keychain(
-    name: keychain_name,
-    password: keychain_password,
-    default_keychain: true,
+    name: options[:name],
+    password: options[:password],
+    default_keychain: false,
     timeout: false
   )
 
   unlock_keychain( # If the keychain file is located in the standard location `~/Library/Keychains`, then it is sufficient to provide the keychain file name, or file name with its suffix.
-    path: keychain_name,
-    password: keychain_password
+    path: options[:name],
+    password: options[:password]
   )
 
 end
@@ -124,13 +130,13 @@ end
 Then, it's time to import those certificates in our machine.
 
 ```
-private_lane :import_certificates do
+private_lane :import_certificates do |options|
 
   import_certificate(
     certificate_path: ENV['CERTIFICATES_PATH']+"/"+ENV['CERTIFICATE_FILENAME'],
     certificate_password: ENV['CERTIFICATE_KEY_PASSWORD'],
-    keychain_name: keychain_name,
-    keychain_password: keychain_password,
+    keychain_name: options[:keychain_name],
+    keychain_password: options[:keychain_password],
     log_output: true
   )
 
@@ -140,13 +146,12 @@ private_lane :import_certificates do
       import_certificate(
         certificate_path: ENV['CERTIFICATES_PATH']+"/"+ENV['CERTIFICATE_FILENAME_PUSH'],
         certificate_password: ENV['CERTIFICATE_KEY_PASSWORD_PUSH'],
-        keychain_name: keychain_name,
-        keychain_password: keychain_password,
+        keychain_name: options[:keychain_name],
+        keychain_password: options[:keychain_password],
         log_output: true
       )
 
   end
 
 end
-
 ```

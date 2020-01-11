@@ -90,8 +90,10 @@ Let's go ahead setting up:
   - after installing it, please go ahead installing the following plugins:
     - Strict Crumb Issuer Plugin
     - AnsiColor
+    - Build Name and Description Setter (in case it's not installed by default)
 
-After doing so, restart Jenkins and make sure this configuration is setup under:
+After doing so, restart Jenkins and make sure the following configuration is setup:
+Go to:
 Manage Jenkins -> Configure Global Security -> CSRF Protection
 
 ![](/res/jenkins_crumb_check.png)
@@ -99,18 +101,17 @@ Manage Jenkins -> Configure Global Security -> CSRF Protection
 - Our Slackbot using [Corebot](https://github.com/outofcoffee/corebot)
   - you can either try their cloud based solution (free plan / not recommended)
 
-Skip the docker integration below if you've tried the cloud hosted one
+_Skip the docker integration below if you've tried the cloud hosted one_
 
 - [Install Docker](https://docs.docker.com/docker-for-mac/install/) in our Machine
-- Create Codesigning lanes
-- Enrich the BetaDeliveryFastfile
 - [Integrate Fabric Crashlytics](https://firebase.google.com/docs/crashlytics/get-started?platform=ios&utm_source=fabric&utm_medium=inline_banner&utm_campaign=fabric_sunset&utm_content=kits_crashlytics) in your project
 - Integrate Fabric in your Fastlane solution
-  - CRASHLYTICS_APIKEY in your .env file
-  - CRASHLYTICS_BUILDSECRET in your .env file
+  -- Two choices here (check the [Delivery doc](Delivery.md) for more info):
+  --- Have your keys defined as User Defined Settings
+  --- Have your keys defined at .env level
 
 For more info follow:
 
-[Code signing guidelines](Codesign.md)
+[Code-signing guidelines](Codesign.md)
 
 [Delivery guidelines](Delivery.md)

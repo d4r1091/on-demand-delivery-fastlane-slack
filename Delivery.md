@@ -21,47 +21,44 @@ We follow these steps:
 ```
 
 desc 'Build that app!'
-private_lane :archive do
+private_lane :archive do |options|
 
-  # Install cocoapods
-  cocoapods(repo_update: true, use_bundle_exec: true)
+  scheme_name = options[:scheme_name]
+  build_number = options[:ci_build_number]
 
-  # Increment build number  
-  increment_build_number_in_plist(
-    xcodeproj: xcodeproj_path,
-    build_configuration_name: build_configuration,
-    target: scheme_name,
-    build_number: ci_build_number # can be your service build number assigned to that job
-  )
-
+  # Changing the name adding a prefix
+  # i.e.: STA-[PARTNER] meaning: Staging version of one PARTNER
   appname_prefix = ENV['APPNAME_PREFIX']
   app_display_name = scheme_name
 
+  # Change the Display Name of your app if needed
   unless appname_prefix.to_s.empty?
     app_display_name = appname_prefix +'-'+scheme_name
-  do
+  end
 
-  # Change the Display Name of your app if needed
   update_info_plist(
-    plist_path: "#{plist_path}#{scheme_name}-Info.plist",
-    display_name: app_display_name
+    plist_path: "#{options[:plist_path]}#{scheme_name}-Info.plist",
+    display_name: app_display_name,
+    xcodeproj: options[:xcodeproj_path]
   )
 
   # Build your app
-  gym(scheme: scheme_name,
-      include_bitcode: false,
-      export_method: export_method,
-      export_options: {
-        provisioningProfiles: {
-          current_app_bundle_identifier => provisioning_profile_name
-        }
-      },
-      configuration: build_configuration,
-      codesigning_identity: ENV['CODESIGNING_IDENTITY'],
-      output_name: "#{scheme_name}_#{build}.ipa",
-      output_directory: ENV['OUTPUTS_PATH'],
-      skip_package_ipa: ENV['SKIP_PACKAGE_IPA']
-    )
+  build_ios_app(
+    scheme: scheme_name,
+    configuration: options[:build_configuration],
+    include_bitcode: false,
+    export_method: options[:export_method],
+    export_options: {
+      provisioningProfiles: {
+        options[:bundle_identifier] => options[:provisioning_profile_name]
+      }
+    },
+    configuration: options[:build_configuration],
+    codesigning_identity: ENV['CODESIGNING_IDENTITY'],
+    output_name: "#{scheme_name}_#{ci_build_number}.ipa",
+    output_directory: ENV['OUTPUTS_PATH'],
+    skip_package_ipa: ENV['SKIP_PACKAGE_IPA']
+  )
 
 end
 
@@ -76,7 +73,7 @@ You can store those wherever you want:
 - User Defined build settings
 - Plist file (less secure)
 
-In this tutorial (as we _talk_ with one Fabric instance only) we will store them into the root .env file
+In this tutorial (as we _interface_ our projects with one Fabric organisation only) we will store them into the root .env file
 
 ```
 desc 'Submits a newly packaged app to to Fabric'
@@ -87,12 +84,35 @@ private_lane :submit_to_fabric do
     api_token: crashlytics_apikey,
     build_secret: crashlytics_buildsecret,
     groups: ENV['CRASHLYTICS_GROUP'],
-    debug: true,
-    notes: "#{build_configuration} - #{changelog}"
+    notes: "#{options[:build_configuration]} - #{options[:release_notes]}"
   )
 
 end
 
+```
+
+#### Snippet for those who have the keys added as User Defined Setting
+
+The `submit_to_fabric` lane comes without the following script as we have setup the crashlytics keys at root .env level.
+If you'd like to have it as User Defined Setting, add the below script before the `crashlytics(...)` action within the
+`submit_to_fabric` lane.
+
+```
+# look for CRASHLITYCS_APIKEY and CRASHLYTICS_BUILDSECRET set into our project Build Settings
+
+crashlytics_apikey = ''
+crashlytics_buildsecret = ''
+project = Xcodeproj::Project.open("../#{options[:xcodeproj_path]}")
+project.targets.each do |mtarget|
+    if mtarget.name == options[:scheme_name]
+        mtarget.build_configurations.each do |mbuild|
+            if mbuild.name == options[:build_configuration]
+                crashlytics_apikey =  mbuild.build_settings['CRASHLYTICS_APIKEY'].chomp
+                crashlytics_buildsecret =  mbuild.build_settings['CRASHLYTICS_BUILDSECRET'].chomp
+            end
+        end
+    end
+end
 ```
 
 ### Testflight delivery
