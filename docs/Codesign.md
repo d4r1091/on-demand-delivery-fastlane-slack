@@ -10,6 +10,43 @@ Goal is:
 - understanding what we do
 - make it working
 
+### How we authenticate with Apple?
+
+Fastlane provides certain ways to authenticate with Apple and perform operations like:
+
+- validate Certificates
+- recreate, download, validate provisioning profile
+- upload builds
+
+In order to achieve all the above, we need certain variables to setup.
+It's up to us how to store it, either as Jenkins credentials or within _Manage Jenkins -> Configure System_
+
+Please read the info below:
+
+> If the account in place is the Account Holder, hence the 2FA is enabled by default, hence a FASTLANE_SESSION is required.
+If the account you'll be using IS NOT the Account Holder, you won't need any FASTLANE_SESSION, as long as the Account is setup with the required permission to access to Certificates and provisioning profiles.
+
+`FASTLANE_USER`: Your App Store Connect / Apple Developer Portal user.
+
+`FASTLANE_PASSWORD`: Your App Store Connect / Apple Developer Portal user password.
+
+`FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`: provided in case you have 2-factor enabled and use pilot or deliver to upload a binary to App Store Connect
+
+`FASTLANE_SESSION`: You need to provide a pregenerated session via `fastlane spaceauth` if you have 2-factor authentication enabled and want to use any actions that communicates with App Store Connect.
+
+In case That's *the one* we are going to work with the most in case of 2FA enabled.
+Basically, as we want to _skip_ the 2FA for the Account Holder, we need to the generate a new session.
+This session will last for ~30days.
+
+To generate a new session - from machine with Fastlane installed execute:
+
+`fastlane spaceauth -u [APPLE_ID]`
+
+You'll be prompted to input the password if you don't have it stored in your Keychain.
+> If you want to store it follow [this fastlane doc](https://docs.fastlane.tools/advanced/other/#adding-credentials)
+
+Then you'll be asked to add the 6 digit code from the 2FA and after that, the session will be printed out as summary.
+
 ### Lane explained
 
 ```

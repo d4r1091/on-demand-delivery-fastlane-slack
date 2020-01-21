@@ -10,15 +10,21 @@ private_lane :beta_delivery_laod_test_lane do
 
 end
 
-desc 'Submits a newly packaged app to to Fabric'
-private_lane :submit_to_fabric do |options|
+desc 'Submits a newly packaged app to to Firebase'
+private_lane :submit_to_firebase do |options|
 
-  crashlytics(
-    crashlytics_path: './Pods/Crashlytics/submit', # path to your 'Crashlytics.framework'
-    api_token: crashlytics_apikey,
-    build_secret: crashlytics_buildsecret,
+  puts "Installing Firebase CLI"
+  sh "curl -sL https://firebase.tools | bash"
+
+  # The firebase_cli_path is the default one in which Firebase place the executable
+  # it is not a mandatory parameter.
+  # However, for some reason, on CI environments, we need to explicitly specify it
+
+  firebase_app_distribution(
+    app: ENV['FIREBASE_APP_ID'],
+    firebase_cli_path: "/usr/local/bin/firebase",
     groups: ENV['CRASHLYTICS_GROUP'],
-    notes: "#{options[:build_configuration]} - #{options[:release_notes]}"
+    release_notes: "#{options[:build_configuration]} - #{options[:release_notes]}"
   )
 
 end
