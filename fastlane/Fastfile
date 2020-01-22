@@ -164,10 +164,19 @@ platform :ios do
   desc "Deliver build given a BUILD_SERVICE defined"
   lane :deliver_build do
 
-    if build_service == 'testflight'
-      testflight_delivery
-    elsif build_service == 'fabric'
-      beta_delivery
+    common_pre_delivery_steps
+
+    # checks the ENV VAR SKIP_PACKAGE_IPA is evaluated
+    # if true, we won't have an IPA hence nothing to upload
+
+    unless ENV['SKIP_PACKAGE_IPA'] == 'true'
+
+      if build_service == 'testflight'
+        testflight_delivery
+      elsif build_service == 'fabric'
+        beta_delivery
+      end
+
     end
 
   end
@@ -213,8 +222,6 @@ platform :ios do
       keychain_password: keychain_password,
     )
 
-    retrieve_fastlane_session
-
     manual_code_sign_app(
       scheme_name: scheme_name,
       xcodeproj_path: xcodeproj_path,
@@ -255,35 +262,17 @@ platform :ios do
 
   desc "Beta delivery private lane"
   private_lane :beta_delivery do
-
-    common_pre_delivery_steps
-
-    # checks the ENV VAR SKIP_PACKAGE_IPA is evaluated
-    # if true, we won't have an IPA hence nothing to upload
-
-    unless ENV['SKIP_PACKAGE_IPA'] == 'true'
-      submit_to_fabric(
-        scheme_name: scheme_name,
-        build_configuration: build_configuration,
-        xcodeproj_path: xcodeproj_path,
-        release_notes: changelog
-      )
-    end
-
+    submit_to_fabric(
+      scheme_name: scheme_name,
+      build_configuration: build_configuration,
+      xcodeproj_path: xcodeproj_path,
+      release_notes: changelog
+    )
   end
 
   desc "Testflight delivery private lane"
   private_lane :testflight_delivery do
-
-    common_pre_delivery_steps
-
-    # checks the ENV VAR SKIP_PACKAGE_IPA is evaluated
-    # if true, we won't have an IPA hence nothing to upload
-
-    unless ENV['SKIP_PACKAGE_IPA'] == 'true'
-      upload_testflight(changelog: changelog)
-    end
-
+    upload_testflight(changelog: changelog)
   end
 
 ##################### END PRIVATE LANES #########################
