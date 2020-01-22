@@ -2,7 +2,8 @@ desc 'Build that app!'
 private_lane :archive do |options|
 
   scheme_name = options[:scheme_name]
-  build_number = options[:ci_build_number]
+  build_number = ci_build_number
+  build_configuration = options[:build_configuration]
 
   # Changing the name adding a prefix
   # i.e.: STA-[PARTNER] meaning: Staging version of one PARTNER
@@ -23,7 +24,7 @@ private_lane :archive do |options|
   # Build your app
   build_ios_app(
     scheme: scheme_name,
-    configuration: options[:build_configuration],
+    configuration: build_configuration,
     include_bitcode: false,
     export_method: options[:export_method],
     export_options: {
@@ -31,9 +32,8 @@ private_lane :archive do |options|
         options[:bundle_identifier] => options[:provisioning_profile_name]
       }
     },
-    configuration: options[:build_configuration],
     codesigning_identity: ENV['CODESIGNING_IDENTITY'],
-    output_name: "#{scheme_name}_#{ci_build_number}.ipa",
+    output_name: "#{scheme_name}_#{build_configuration}_#{build_number}.ipa",
     output_directory: ENV['OUTPUTS_PATH'],
     skip_package_ipa: ENV['SKIP_PACKAGE_IPA']
   )

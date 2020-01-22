@@ -10,30 +10,21 @@ private_lane :beta_delivery_laod_test_lane do
 
 end
 
-desc 'Submits a newly packaged app to to Fabric'
-private_lane :submit_to_fabric do |options|
+desc 'Submits a newly packaged app to to Firebase'
+private_lane :submit_to_firebase do |options|
 
-  # look for CRASHLITYCS_APIKEY and CRASHLYTICS_BUILDSECRET set into our project Build Settings
-  crashlytics_apikey = ''
-  crashlytics_buildsecret = ''
-  project = Xcodeproj::Project.open("../#{options[:xcodeproj_path]}")
-  project.targets.each do |mtarget|
-      if mtarget.name == options[:scheme_name]
-          mtarget.build_configurations.each do |mbuild|
-              if mbuild.name == options[:build_configuration]
-                  crashlytics_apikey =  mbuild.build_settings['CRASHLYTICS_APIKEY'].chomp
-                  crashlytics_buildsecret =  mbuild.build_settings['CRASHLYTICS_BUILDSECRET'].chomp
-              end
-          end
-      end
-  end
+  puts "Installing Firebase CLI"
+  sh "curl -sL https://firebase.tools | bash"
 
-  crashlytics(
-    crashlytics_path: './Pods/Crashlytics/submit', # path to your 'Crashlytics.framework'
-    api_token: crashlytics_apikey,
-    build_secret: crashlytics_buildsecret,
+  # The firebase_cli_path is the default one in which Firebase place the executable
+  # it is not a mandatory parameter.
+  # However, for some reason, on CI environments, we need to explicitly specify it
+
+  firebase_app_distribution(
+    app: ENV['FIREBASE_APP_ID'],
+    firebase_cli_path: "/usr/local/bin/firebase",
     groups: ENV['CRASHLYTICS_GROUP'],
-    notes: "#{options[:build_configuration]} - #{options[:release_notes]}"
+    release_notes: "#{options[:build_configuration]} - #{options[:release_notes]}"
   )
 
 end
