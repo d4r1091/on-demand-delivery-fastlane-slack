@@ -1,6 +1,10 @@
+# On-Demand delivery for iOS via Jenkins and Slack
+
 <p align="center" >
-  <img src="https://repository-images.githubusercontent.com/212916519/1d1ea380-2ffd-11ea-97c3-58fb8fac67dc" width=600 height=auto>
+  <img src="res/header_logo.png" width=600 height=auto>
 </p>
+
+## Slack a message to get an app!
 
 ## Thanks to
 - [#PragmaConference](http://pragmaconference.com) 💪🏻🚀#️⃣📱
