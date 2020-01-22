@@ -104,7 +104,7 @@ end
 
 #### Deprecated Fabric implementation
 
-The `submit_to_fabric` lane can comes without the build settings script (shown below - right before the `crashlytics` Fastlane action) if you setup the crashlytics keys at root .env (info about dotenv [here](./README.md)) level.
+The `submit_to_fabric` lane can comes without the build settings script (shown below - right before the `crashlytics` Fastlane action) if you setup the crashlytics keys at root .env (info about dotenv [here](../README.md)) level.
 In that case, the entire script before the `crashlytics` Fastlane action can be omitted.
 
 ```

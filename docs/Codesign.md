@@ -10,6 +10,12 @@ Goal is:
 - understanding what we do
 - make it working
 
+Make sure you've got exported your Apple Certificates in the .p12 format and replaced it within the .env files appropriately
+If your app doesn't support Push Notification, feel free to remove these two from your .env files:
+
+- CERTIFICATE_FILENAME_PUSH
+- CERTIFICATE_KEY_PASSWORD_PUSH
+
 ### How we authenticate with Apple?
 
 Fastlane provides certain ways to authenticate with Apple and perform operations like:
