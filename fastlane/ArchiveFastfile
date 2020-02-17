@@ -8,18 +8,16 @@ private_lane :archive do |options|
   # Changing the name adding a prefix
   # i.e.: STA-[PARTNER] meaning: Staging version of one PARTNER
   appname_prefix = ENV['APPNAME_PREFIX']
-  app_display_name = scheme_name
 
   # Change the Display Name of your app if needed
   unless appname_prefix.to_s.empty?
     app_display_name = appname_prefix +'-'+scheme_name
+    update_info_plist(
+      plist_path: "#{options[:plist_path]}#{scheme_name}-Info.plist",
+      display_name: app_display_name,
+      xcodeproj: options[:xcodeproj_path]
+    )
   end
-
-  update_info_plist(
-    plist_path: "#{options[:plist_path]}#{scheme_name}-Info.plist",
-    display_name: app_display_name,
-    xcodeproj: options[:xcodeproj_path]
-  )
 
   # Build your app
   build_ios_app(
